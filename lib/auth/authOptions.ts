@@ -1,8 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { User } from "@/lib/auth/User";
-import { ParkingLot } from "@/types/ParkingLot";
-import { apiFetch } from "@/lib/utils/api";
 
 declare module "next-auth" {
     interface Session {
@@ -10,57 +8,58 @@ declare module "next-auth" {
     }
 }
 
+// Đảm bảo luôn có API URL
+const API_BASE_URL = process.env.API_URL || "https://scpm-be-hmgperdbe4g8h2h9.southeastasia-01.azurewebsites.net/api";
+
 export const authOptions: NextAuthOptions = {
     providers: [
         CredentialsProvider({
             name: "Credentials",
             credentials: {
                 username: { label: "Username", type: "text" },
-                password: { label: "Password", type: "password" },
-                parkingLotId: { label: "Parking Lot", type: "number" }
+                password: { label: "Password", type: "password" }
             },
             async authorize(credentials) {
-                try{
+                try {
                     console.log("Received credentials:", credentials);
 
-                    if (!credentials?.username || !credentials?.password || !credentials?.parkingLotId) {
+                    if (!credentials?.username || !credentials?.password) {
                         console.log("Missing required credentials");
                         return null;
                     }
-    
-                    const { username, password, parkingLotId } = credentials;
-                    const nParkingLotId = Number(parkingLotId);
-                    
-                    // TODO: Implement your actual authentication logic here
-                    const response = await apiFetch("/api/staff/authorize", {
+
+                    const { username, password } = credentials;
+
+                    // URL login không cần thêm tiền tố /api vì đã có trong API_BASE_URL
+                    const response = await fetch(`${API_BASE_URL}/staff/login`, {
                         method: "POST",
-                        body: JSON.stringify({ username, password, parkingLotId: nParkingLotId }),
+                        body: JSON.stringify({ username, password }),
                         headers: {
                             "Content-Type": "application/json",
                         },
                     });
-    
+
+                    console.log("Login URL:", `${API_BASE_URL}/staff/login`);
+
                     if (!response.ok) {
-                        console.log("Authentication failed - invalid credentials");
+                        console.error("Authentication failed - status:", response.status);
                         return null;
                     }
-                    
+
                     const data = await response.json();
-                    console.log("Authentication successful - data:", data);
-    
+                    console.log("Authentication response:", data);
+
                     if (!data.success) {
-                        console.log("Authentication failed - invalid credentials");
+                        console.error("Authentication failed - invalid credentials");
                         return null;
                     }
-    
+
                     const user = data.user;
-                    const parkingLot = data.parkingLot;
-    
+
                     return {
                         id: user.id,
                         name: user.name,
-                        email: user.email,
-                        parkingLot: parkingLot
+                        email: user.email
                     } as User;
                 } catch (error) {
                     console.error("Error authorizing user:", error);
@@ -78,9 +77,8 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                const customUser = user as User;
-                token.id = customUser.id;
-                token.parkingLot = customUser.parkingLot;
+                const staff = user as User;
+                token.id = staff.id;
             }
             return token;
         },
@@ -89,7 +87,6 @@ export const authOptions: NextAuthOptions = {
                 session.user = {
                     ...session.user,
                     id: token.id as string,
-                    parkingLot: token.parkingLot as ParkingLot,
                 };
             }
             return session;

@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bãi đỗ xe",
-  description: "Bãi đỗ xe thông minh",
+  title: "SCPM",
+  description: "Giải pháp đỗ xe thông minh #1 Việt Nam",
 };
 
 export default function RootLayout({

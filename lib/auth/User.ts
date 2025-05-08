@@ -1,19 +1,12 @@
-import { ParkingLot } from "@/types/ParkingLot";
-import { DefaultUser } from "next-auth";
-
 /**
  * Extends the default NextAuth User type to include additional properties
  * needed for our parking management system.
  */
-export interface User extends DefaultUser {
+export interface User {
     id: string;
     name: string;
     email: string;
     image?: string;
-    role?: string;
-    parkingLot?: ParkingLot;
-    permissions?: string[];
-    username?: string;
 }
 
 /**
