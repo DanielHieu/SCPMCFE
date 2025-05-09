@@ -2,14 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
-import UserDropdown from './UserDropDown';
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { data: session, status } = useSession();
-  const isAuthenticated = status === 'authenticated';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,10 +15,6 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: '/auth/signout' });
-  };
 
   return (
     <header
@@ -57,19 +49,6 @@ export default function Header() {
           >
             Tải ứng dụng
           </Link>
-
-          {isAuthenticated ? (
-            <UserDropdown />
-          ) : (
-            <div className="flex items-center space-x-3">
-              <Link
-                href="/auth/signin"
-                className="text-slate-700 hover:text-emerald-500 font-medium transition"
-              >
-                Đăng nhập
-              </Link>
-            </div>
-          )}
         </nav>
 
         {/* Mobile Menu Button */}
@@ -118,45 +97,6 @@ export default function Header() {
             >
               Tải ứng dụng
             </Link>
-
-            {isAuthenticated ? (
-              <>
-                <div className="border-t border-slate-200 my-1 pt-2">
-                  <div className="flex items-center space-x-2 px-2 py-1 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-sm shadow">
-                      {session?.user?.name?.charAt(0) || 'U'}
-                    </div>
-                    <span className="text-slate-700 font-medium">{session?.user?.name || 'User'}</span>
-                  </div>
-                  <Link
-                    href="/dashboard"
-                    className="text-slate-700 hover:text-emerald-500 font-medium transition p-2 block"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full text-left mt-2 text-red-600 hover:text-red-700 font-medium transition p-2 flex items-center"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Đăng xuất
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/auth/signin"
-                  className="text-slate-700 hover:text-emerald-500 font-medium transition p-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Đăng nhập
-                </Link>
-              </>
-            )}
           </div>
         </div>
       )}

@@ -15,7 +15,7 @@ interface ActivationResult {
 }
 
 async function activateAccount(activationCode: string): Promise<ActivationResult> {
-  const API_BASE_URL = process.env.API_URL || "https://scpm-be-hmgperdbe4g8h2h9.southeastasia-01.azurewebsites.net/api";
+  const API_BASE_URL = process.env.API_URL || "https://scpmbe-hrhheedhh7gmatev.southeastasia-01.azurewebsites.net/api";
 
   try {
     console.log(`Activating customer account with code: ${activationCode}`);
@@ -157,7 +157,7 @@ function renderActivationView(result: ActivationResult, activationCode: string |
             <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
               <h3 className="font-medium text-gray-700 mb-2">Bước tiếp theo</h3>
               <p className="text-sm text-gray-600">
-                Bạn đã kích hoạt tài khoản thành công. Bây giờ bạn có thể truy cập vào trang đăng nhập của ứng dụng để sử dụng các dịch vụ của Smart Car Parking.
+                Bạn đã kích hoạt tài khoản thành công. Bây giờ bạn có thể truy cập và đăng nhập ứng dụng để sử dụng các dịch vụ của Smart Car Parking.
               </p>
             </div>
           )}
