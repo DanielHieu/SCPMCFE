@@ -9,7 +9,7 @@ declare module "next-auth" {
 }
 
 // Đảm bảo luôn có API URL
-const API_BASE_URL = process.env.API_URL || "https://scpm-be-hmgperdbe4g8h2h9.southeastasia-01.azurewebsites.net/api";
+const API_BASE_URL = process.env.API_URL || "https://localhost:7178/api";
 
 export const authOptions: NextAuthOptions = {
     providers: [

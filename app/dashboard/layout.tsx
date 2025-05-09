@@ -64,11 +64,6 @@ export default function AuthorizedLayout({ children }: AuthorizedLayoutProps) {
       icon: <LayoutDashboard className="w-5 h-5" />
     },
     {
-      name: 'Lịch làm việc',
-      href: '/dashboard/schedule',
-      icon: <Calendar className="w-5 h-5" />
-    },
-    {
       name: 'Công việc',
       href: '/dashboard/tasks',
       icon: <CheckSquare className="w-5 h-5" />

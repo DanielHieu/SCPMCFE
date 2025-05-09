@@ -21,7 +21,7 @@ export default function TasksPage() {
 
             const response = await fetchApi(`/staff/${session?.user?.id}/tasks`);
 
-            setTasks(response.data);
+            setTasks(response);
         } catch (error) {
             console.error("Error fetching tasks:", error);
             toast.error("Không thể tải danh sách công việc");
@@ -31,14 +31,23 @@ export default function TasksPage() {
     };
 
     useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
+        if (session?.user?.id) {
+            fetchTasks();
+        }
+    }, [session?.user?.id]);
 
     const completeTask = async (taskId: string) => {
         try {
             setCompletingTask(taskId);
 
-            await fetchApi(`/TaskEach/Complete/${taskId}`);
+            await fetchApi(`/TaskEach/${taskId}/Complete`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+
+            toast.success("Đã hoàn thành công việc");
 
             // Update the local tasks list
             setTasks(tasks.map(task =>
@@ -46,25 +55,12 @@ export default function TasksPage() {
                     ? { ...task, status: TaskStatus.Completed }
                     : task
             ));
-
-            toast.success("Đã hoàn thành công việc");
         } catch (error) {
             console.error("Error completing task:", error);
             toast.error("Không thể báo cáo hoàn thành công việc");
         } finally {
             setCompletingTask(null);
         }
-    };
-
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(date);
     };
 
     const getStatusBadge = (status: string) => {
@@ -93,7 +89,7 @@ export default function TasksPage() {
         }
     };
 
-    const isTaskOverdue = (dueDate: string) => {
+    const isTaskOverdue = (dueDate: string, status: string) => {
         return new Date(dueDate) < new Date() && status !== TaskStatus.Completed;
     };
 
@@ -135,13 +131,12 @@ export default function TasksPage() {
                             {tasks?.map((task) => (
                                 <div
                                     key={task.taskEachId}
-                                    className={`border rounded-lg p-4 transition-all hover:shadow-md ${
-                                        task.status === TaskStatus.Completed
-                                            ? "bg-muted/40"
-                                            : isTaskOverdue(task.endDate)
-                                                ? "border-red-200"
-                                                : "border-slate-200"
-                                    }`}
+                                    className={`border rounded-lg p-4 transition-all hover:shadow-md ${task.status === TaskStatus.Completed
+                                        ? "bg-muted/40"
+                                        : isTaskOverdue(task.endDate, task.status)
+                                            ? "border-red-200"
+                                            : "border-slate-200"
+                                        }`}
                                 >
                                     <div className="pb-2 flex flex-row items-start justify-between space-y-0">
                                         <div>
@@ -161,13 +156,13 @@ export default function TasksPage() {
                                         <div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground">
                                             <div className="flex items-center">
                                                 <Calendar className="h-3.5 w-3.5 mr-2 text-emerald-500" />
-                                                <span>Bắt đầu: {formatDate(task.startDate)}</span>
+                                                <span>Bắt đầu: {task.startDate}</span>
                                             </div>
                                             <div className="flex items-center">
                                                 <Calendar className="h-3.5 w-3.5 mr-2 text-amber-500" />
-                                                <span className={isTaskOverdue(task.endDate) ? "text-red-500 font-medium" : ""}>
-                                                    Hạn: {formatDate(task.endDate)}
-                                                    {isTaskOverdue(task.endDate) && " (Quá hạn)"}
+                                                <span className={isTaskOverdue(task.endDate, task.status) ? "text-red-500 font-medium" : ""}>
+                                                    Hạn: {task.endDate}
+                                                    {isTaskOverdue(task.endDate, task.status) && " (Quá hạn)"}
                                                 </span>
                                             </div>
                                         </div>

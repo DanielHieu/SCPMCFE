@@ -17,44 +17,8 @@ export default function ChangePasswordPage() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    // Password validation
-    const [passwordStrength, setPasswordStrength] = useState({
-        minLength: false,
-        hasNumber: false,
-        hasUppercase: false,
-        hasSpecialChar: false,
-    });
-
-    // Calculate overall password strength
-    const strengthPercentage = Object.values(passwordStrength).filter(Boolean).length * 25;
-
-    const getStrengthColor = () => {
-        if (strengthPercentage <= 25) return "bg-red-500";
-        if (strengthPercentage <= 50) return "bg-orange-500";
-        if (strengthPercentage <= 75) return "bg-yellow-500";
-        return "bg-green-500";
-    };
-
-    const getStrengthText = () => {
-        if (strengthPercentage <= 25) return "Yếu";
-        if (strengthPercentage <= 50) return "Trung bình";
-        if (strengthPercentage <= 75) return "Khá";
-        return "Mạnh";
-    };
-
-    const validatePassword = (password: string) => {
-        setPasswordStrength({
-            minLength: password.length >= 8,
-            hasNumber: /\d/.test(password),
-            hasUppercase: /[A-Z]/.test(password),
-            hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-        });
-    };
-
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newPass = e.target.value;
-        setNewPassword(newPass);
-        validatePassword(newPass);
+        setNewPassword(e.target.value);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -68,13 +32,7 @@ export default function ChangePasswordPage() {
             return;
         }
 
-        // Check password strength
-        const isStrongPassword = Object.values(passwordStrength).every(Boolean);
-        if (!isStrongPassword) {
-            setError("Mật khẩu mới không đủ mạnh. Vui lòng tuân thủ các yêu cầu.");
-            return;
-        }
-
+        // Remove password strength check
         setIsLoading(true);
 
         try {
@@ -94,12 +52,6 @@ export default function ChangePasswordPage() {
             // Reset form
             setNewPassword("");
             setConfirmPassword("");
-            setPasswordStrength({
-                minLength: false,
-                hasNumber: false,
-                hasUppercase: false,
-                hasSpecialChar: false,
-            });
 
         } catch (error) {
             console.error("Error changing password:", error);
@@ -157,61 +109,6 @@ export default function ChangePasswordPage() {
                                         required
                                     />
                                 </div>
-
-                                {newPassword && (
-                                    <div className="mt-3 space-y-3 animate-fadeIn">
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-xs font-medium text-slate-500">Độ mạnh mật khẩu: <span className={`font-semibold ${strengthPercentage >= 75 ? 'text-green-600' : strengthPercentage >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>{getStrengthText()}</span></span>
-                                                <span className="text-xs font-medium text-slate-500">{strengthPercentage}%</span>
-                                            </div>
-                                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full ${getStrengthColor()} transition-all duration-300 ease-in-out`}
-                                                    style={{ width: `${strengthPercentage}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <p className="text-xs font-medium text-slate-600 mb-2">Mật khẩu mới phải đáp ứng các điều kiện sau:</p>
-                                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                                <li className={`flex items-center p-2 rounded ${passwordStrength.minLength ? 'bg-green-50 text-green-700' : 'bg-slate-50 text-slate-600'}`}>
-                                                    {passwordStrength.minLength ? (
-                                                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                                                    ) : (
-                                                        <XCircle className="h-4 w-4 mr-2 text-slate-400" />
-                                                    )}
-                                                    Có ít nhất 8 ký tự
-                                                </li>
-                                                <li className={`flex items-center p-2 rounded ${passwordStrength.hasUppercase ? 'bg-green-50 text-green-700' : 'bg-slate-50 text-slate-600'}`}>
-                                                    {passwordStrength.hasUppercase ? (
-                                                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                                                    ) : (
-                                                        <XCircle className="h-4 w-4 mr-2 text-slate-400" />
-                                                    )}
-                                                    Có ít nhất 1 chữ hoa
-                                                </li>
-                                                <li className={`flex items-center p-2 rounded ${passwordStrength.hasNumber ? 'bg-green-50 text-green-700' : 'bg-slate-50 text-slate-600'}`}>
-                                                    {passwordStrength.hasNumber ? (
-                                                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                                                    ) : (
-                                                        <XCircle className="h-4 w-4 mr-2 text-slate-400" />
-                                                    )}
-                                                    Có ít nhất 1 chữ số
-                                                </li>
-                                                <li className={`flex items-center p-2 rounded ${passwordStrength.hasSpecialChar ? 'bg-green-50 text-green-700' : 'bg-slate-50 text-slate-600'}`}>
-                                                    {passwordStrength.hasSpecialChar ? (
-                                                        <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                                                    ) : (
-                                                        <XCircle className="h-4 w-4 mr-2 text-slate-400" />
-                                                    )}
-                                                    Có ít nhất 1 ký tự đặc biệt
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                             <div>
                                 <label htmlFor="confirm-password" className="block text-sm font-medium text-slate-700 mb-2">

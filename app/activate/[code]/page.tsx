@@ -1,5 +1,5 @@
+import { Link } from 'lucide-react';
 import { Metadata } from 'next';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Kích hoạt tài khoản | Smart Car Parking',
@@ -15,7 +15,7 @@ interface ActivationResult {
 }
 
 async function activateAccount(activationCode: string): Promise<ActivationResult> {
-  const API_BASE_URL = process.env.API_URL || "";
+  const API_BASE_URL = process.env.API_URL || "https://scpm-be-hmgperdbe4g8h2h9.southeastasia-01.azurewebsites.net/api";
 
   try {
     console.log(`Activating customer account with code: ${activationCode}`);
@@ -57,25 +57,31 @@ async function activateAccount(activationCode: string): Promise<ActivationResult
   }
 }
 
-const ActivatePage = async ({ params }: { params: { code: string } }) => {
-  // Await searchParams để tuân thủ yêu cầu của Next.js
-  const { code } = params;
+type PageProps = {
+  params: Promise<{ code: string }>
+}
 
-  // Lấy mã kích hoạt từ URL (hỗ trợ cả 'code' và 'activationCode')
-  const activationCode = code;
+// Trong Next.js 15, params được truyền vào dưới dạng Promise
+export default async function ActivatePage(props: PageProps) {
+  // Truy cập params theo kiểu Promise
+  const resolvedParams = await props.params;
+  const activationCode = resolvedParams.code;
 
-  // Chuẩn bị giá trị mặc định cho kết quả kích hoạt
-  let result: ActivationResult = {
-    success: false,
-    message: 'Không tìm thấy mã kích hoạt',
-    statusCode: 400
-  };
-
-  // Xử lý kích hoạt tài khoản nếu có mã
-  if (activationCode) {
-    result = await activateAccount(activationCode);
+  // Kiểm tra mã kích hoạt
+  if (!activationCode || activationCode === 'undefined') {
+    return renderActivationView({
+      success: false,
+      message: 'Không tìm thấy mã kích hoạt',
+      statusCode: 400
+    }, null);
   }
 
+  // Xử lý kích hoạt tài khoản
+  const result = await activateAccount(activationCode);
+  return renderActivationView(result, activationCode);
+}
+
+function renderActivationView(result: ActivationResult, activationCode: string | null) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col items-center justify-center">
       <div className="w-full max-w-md p-6">
@@ -174,10 +180,13 @@ const ActivatePage = async ({ params }: { params: { code: string } }) => {
           <p className="mb-2">
             © {new Date().getFullYear()} Smart Car Parking. Tất cả các quyền đã được bảo lưu.
           </p>
+          <div className="flex justify-center space-x-4">
+            <Link href="/" className="hover:text-emerald-600 transition-colors">Trang chủ</Link>
+            <Link href="/terms" className="hover:text-emerald-600 transition-colors">Điều khoản</Link>
+            <Link href="/privacy" className="hover:text-emerald-600 transition-colors">Quyền riêng tư</Link>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default ActivatePage;
+}
