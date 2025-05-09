@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { Calendar, dateFnsLocalizer, View } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay, addDays, addMonths, startOfMonth, endOfMonth } from "date-fns";
+import { format, parse, startOfWeek, getDay, addDays, startOfMonth, endOfMonth } from "date-fns";
 import { vi } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar as CalendarIcon, MapPin, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Loader2, Calendar as CalendarIcon, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { fetchApi } from "@/lib/api/api-helper";
 import { useSession } from "next-auth/react";
-import { Task, TaskStatus, TaskPriority } from "@/types/taskEach";
+import { Task } from "@/types/taskEach";
 
 // Cấu hình date-fns cho react-big-calendar
 const locales = {
@@ -54,12 +54,12 @@ export default function SchedulePage() {
         try {
             // Gửi request tới API để lấy dữ liệu lịch
             const response = await fetchApi("/Staff/Schedule", {
-              method: "POST",
-              body: JSON.stringify({
-                staffId: session?.user?.id,
-                startDate: format(startOfMonth(date), 'yyyy-MM-dd'),
-                endDate: format(endOfMonth(date), 'yyyy-MM-dd')
-              })
+                method: "POST",
+                body: JSON.stringify({
+                    staffId: session?.user?.id,
+                    startDate: format(startOfMonth(date), 'yyyy-MM-dd'),
+                    endDate: format(endOfMonth(date), 'yyyy-MM-dd')
+                })
             });
 
             // Chuyển đổi dữ liệu từ API response sang định dạng ScheduleEvent
@@ -125,8 +125,8 @@ export default function SchedulePage() {
     const eventStyleGetter = (event: ScheduleEvent) => {
         let backgroundColor = '#3174ad'; // Màu mặc định
         let borderColor = 'transparent';
-        let textColor = 'white';
-        
+        const textColor = 'white';
+
         // Màu sắc dựa trên priority
         if (event.priority) {
             switch (event.priority) {
@@ -141,7 +141,7 @@ export default function SchedulePage() {
                     break;
             }
         }
-        
+
         // Điều chỉnh dựa trên status
         if (event.status) {
             switch (event.status) {
@@ -216,7 +216,7 @@ export default function SchedulePage() {
 
         const getStatusBadge = (status?: string) => {
             if (!status) return null;
-            
+
             switch (status) {
                 case 'Completed':
                     return <Badge variant="secondary" className="bg-green-100 text-green-800"><CheckCircle className="mr-1 h-3 w-3" /> Hoàn thành</Badge>;
@@ -231,7 +231,7 @@ export default function SchedulePage() {
 
         const getPriorityBadge = (priority?: string) => {
             if (!priority) return null;
-            
+
             switch (priority) {
                 case 'High':
                     return <Badge className="bg-red-100 text-red-800">Cao</Badge>;
@@ -340,7 +340,7 @@ export default function SchedulePage() {
                             <div className="w-3 h-3 mr-1 rounded-full bg-blue-400"></div>
                             <span>Thấp</span>
                         </div>
-                        
+
                         <div className="text-xs font-medium text-slate-700 mb-1 mt-2 w-full">Trạng thái:</div>
                         <div className="flex items-center text-xs">
                             <div className="w-3 h-3 mr-1 rounded-full bg-gray-300"></div>

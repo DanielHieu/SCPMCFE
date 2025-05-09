@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   CheckSquare,
   User,
-  Calendar,
   LogOut,
   Menu,
   X
