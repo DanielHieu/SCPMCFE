@@ -1,4 +1,4 @@
-const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://localhost:3000";
+const APP_BASE_URL = process.env.NEXT_PUBLIC_API_LOCAL_URL || "https://localhost:3000";
 
 const PROXY_API_PATH = "/api/proxy";
 
