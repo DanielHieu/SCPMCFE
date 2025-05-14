@@ -260,7 +260,7 @@ export default function SchedulePage() {
                         <div className="flex items-center text-sm text-gray-600">
                             <CalendarIcon className="h-4 w-4 mr-2 text-gray-400" />
                             <span>
-                                {format(selectedEvent.start, 'dd/MM/yyyy HH:mm')} - {format(selectedEvent.end, 'HH:mm')}
+                                {format(selectedEvent.start, 'dd/MM/yyyy')} - {format(selectedEvent.end, 'dd/MM/yyyy')}
                             </span>
                         </div>
 
