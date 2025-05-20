@@ -133,7 +133,7 @@ export default function Header() {
                     className="text-slate-700 hover:text-emerald-500 font-medium transition p-2 block"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Dashboard
+                    Lịch công tác
                   </Link>
                   <button
                     onClick={handleSignOut}

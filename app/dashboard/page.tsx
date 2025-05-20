@@ -191,7 +191,6 @@ export default function SchedulePage() {
             { key: "month", label: "Tháng" },
             { key: "week", label: "Tuần" },
             { key: "day", label: "Ngày" },
-            { key: "agenda", label: "Lịch trình" },
         ];
 
         return (
@@ -310,6 +309,7 @@ export default function SchedulePage() {
                             onNavigate={(newDate: Date) => setDate(newDate)}
                             onSelectEvent={handleSelectEvent}
                             eventPropGetter={eventStyleGetter}
+                            views={['month', 'week', 'day']}
                             messages={{
                                 next: "Tiếp",
                                 previous: "Trước",
@@ -317,11 +317,10 @@ export default function SchedulePage() {
                                 month: "Tháng",
                                 week: "Tuần",
                                 day: "Ngày",
-                                agenda: "Lịch trình",
                                 date: "Ngày",
                                 time: "Giờ",
                                 event: "Sự kiện",
-                                noEventsInRange: "Không có sự kiện trong khoảng thời gian này",
+                                noEventsInRange: "Không có công việc trong khoảng thời gian này",
                             }}
                         />
                     </div>

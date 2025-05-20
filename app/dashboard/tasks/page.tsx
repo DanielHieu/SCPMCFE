@@ -3,17 +3,34 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, Clock, Calendar, AlertCircle } from "lucide-react";
+import {
+    Loader2,
+    CheckCircle,
+    Clock,
+    AlertCircle,
+    PlayCircle
+} from "lucide-react";
 import { toast } from "sonner";
 import { fetchApi } from "@/lib/api/api-helper";
 import { Task, TaskStatus } from "@/types/taskEach";
 import { useSession } from "next-auth/react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function TasksPage() {
     const { data: session } = useSession();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
-    const [completingTask, setCompletingTask] = useState<string | null>(null);
+    const [processingTask, setProcessingTask] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState("all");
+    const [activePriorityTab, setActivePriorityTab] = useState("all");
 
     const fetchTasks = async () => {
         try {
@@ -36,31 +53,39 @@ export default function TasksPage() {
         }
     }, [session?.user?.id]);
 
-    const completeTask = async (taskId: string) => {
+    const updateTaskStatus = async (taskId: string, newStatus: TaskStatus, successMessage: string) => {
         try {
-            setCompletingTask(taskId);
+            setProcessingTask(taskId);
 
-            await fetchApi(`/TaskEach/${taskId}/Complete`, {
+            await fetchApi(`/TaskEach/${taskId}/${newStatus}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 }
             });
 
-            toast.success("Đã hoàn thành công việc");
+            toast.success(successMessage);
 
             // Update the local tasks list
             setTasks(tasks.map(task =>
                 task.taskEachId === taskId
-                    ? { ...task, status: TaskStatus.Completed }
+                    ? { ...task, status: newStatus }
                     : task
             ));
         } catch (error) {
-            console.error("Error completing task:", error);
-            toast.error("Không thể báo cáo hoàn thành công việc");
+            console.error(`Error updating task to ${newStatus}:`, error);
+            toast.error(`Không thể cập nhật trạng thái công việc sang ${newStatus}`);
         } finally {
-            setCompletingTask(null);
+            setProcessingTask(null);
         }
+    };
+
+    const startTask = async (taskId: string) => {
+        updateTaskStatus(taskId, TaskStatus.InProgress, "Đã bắt đầu công việc");
+    };
+
+    const completeTask = async (taskId: string) => {
+        updateTaskStatus(taskId, TaskStatus.Completed, "Đã hoàn thành công việc");
     };
 
     const getStatusBadge = (status: string) => {
@@ -89,9 +114,23 @@ export default function TasksPage() {
         }
     };
 
-    const isTaskOverdue = (dueDate: string, status: string) => {
-        return new Date(dueDate) < new Date() && status !== TaskStatus.Completed;
-    };
+    // Filter tasks based on search, priority and tab
+    const filteredTasks = tasks.filter(task => {
+        // Priority filter
+        const matchesPriority = activePriorityTab !== "all" ? task.priority === activePriorityTab : true;
+
+        // Status tab filter
+        let matchesTab = true;
+        if (activeTab === "pending") {
+            matchesTab = task.status === TaskStatus.Pending;
+        } else if (activeTab === "inProgress") {
+            matchesTab = task.status === TaskStatus.InProgress;
+        } else if (activeTab === "completed") {
+            matchesTab = task.status === TaskStatus.Completed;
+        }
+
+        return matchesPriority && matchesTab;
+    });
 
     if (loading) {
         return (
@@ -104,16 +143,18 @@ export default function TasksPage() {
 
     return (
         <div className="container mx-auto py-8 px-4">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
                 <header className="mb-8 border-b pb-4">
                     <h1 className="text-2xl font-bold">Danh sách công việc</h1>
                     <p className="text-muted-foreground mt-1">Quản lý và theo dõi các công việc được giao</p>
                 </header>
 
                 <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200">
-                    <div className="flex items-center mb-6 pb-4 border-b">
-                        <CheckCircle className="h-6 w-6 mr-2 text-emerald-600" />
-                        <h2 className="text-xl font-semibold">Công việc của bạn</h2>
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                        <div className="flex items-center">
+                            <CheckCircle className="h-6 w-6 mr-2 text-emerald-600" />
+                            <h2 className="text-xl font-semibold">Công việc của bạn</h2>
+                        </div>
                     </div>
 
                     {tasks?.length === 0 ? (
@@ -127,74 +168,192 @@ export default function TasksPage() {
                             </p>
                         </div>
                     ) : (
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                            {tasks?.map((task) => (
-                                <div
-                                    key={task.taskEachId}
-                                    className={`border rounded-lg p-4 transition-all hover:shadow-md ${task.status === TaskStatus.Completed
-                                        ? "bg-muted/40"
-                                        : isTaskOverdue(task.endDate, task.status)
-                                            ? "border-red-200"
-                                            : "border-slate-200"
-                                        }`}
-                                >
-                                    <div className="pb-2 flex flex-row items-start justify-between space-y-0">
-                                        <div>
-                                            <h3 className="text-lg font-semibold mb-1">{task.title}</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {getStatusBadge(task.status)}
-                                                {getPriorityBadge(task.priority)}
-                                            </div>
-                                        </div>
+                        <div className="space-y-4">
+                            {/* Status Tabs */}
+                            <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                                <div className="border-b">
+                                    <TabsList className="mb-0 bg-transparent p-0 h-auto">
+                                        <TabsTrigger
+                                            value="all"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-2"
+                                        >
+                                            Tất cả
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="pending"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-2"
+                                        >
+                                            Chờ xử lý
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="inProgress"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-2"
+                                        >
+                                            Đang thực hiện
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="completed"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-2"
+                                        >
+                                            Hoàn thành
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </div>
+                            </Tabs>
+
+                            {/* Priority Tabs */}
+                            <Tabs defaultValue="all" value={activePriorityTab} onValueChange={setActivePriorityTab} className="w-full">
+                                <div className="border-b mb-4">
+                                    <TabsList className="mb-0 bg-transparent p-0 h-auto">
+                                        <TabsTrigger
+                                            value="all"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6 py-2"
+                                        >
+                                            Tất cả mức độ
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="High"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-red-500 text-red-700 rounded-none px-6 py-2"
+                                        >
+                                            Cao
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="Medium"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-amber-500 text-amber-700 rounded-none px-6 py-2"
+                                        >
+                                            Trung bình
+                                        </TabsTrigger>
+                                        <TabsTrigger
+                                            value="Low"
+                                            className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 text-blue-700 rounded-none px-6 py-2"
+                                        >
+                                            Thấp
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </div>
+                            </Tabs>
+
+                            {/* Table Content */}
+                            <TaskTable
+                                tasks={filteredTasks}
+                                processingTask={processingTask}
+                                startTask={startTask}
+                                completeTask={completeTask}
+                                getStatusBadge={getStatusBadge}
+                                getPriorityBadge={getPriorityBadge}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+interface TaskTableProps {
+    tasks: Task[];
+    processingTask: string | null;
+    startTask: (taskId: string) => Promise<void>;
+    completeTask: (taskId: string) => Promise<void>;
+    getStatusBadge: (status: string) => React.ReactNode;
+    getPriorityBadge: (priority: string) => React.ReactNode | null;
+}
+
+function TaskTable({
+    tasks,
+    processingTask,
+    startTask,
+    completeTask,
+    getStatusBadge,
+    getPriorityBadge
+}: TaskTableProps) {
+    return (
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className="w-[30%]">Tiêu đề</TableHead>
+                        <TableHead className="w-[15%]">Trạng thái</TableHead>
+                        <TableHead className="w-[10%]">Ưu tiên</TableHead>
+                        <TableHead className="w-[15%]">Ngày bắt đầu</TableHead>
+                        <TableHead className="w-[15%]">Hạn hoàn thành</TableHead>
+                        <TableHead className="w-[15%]">Thao tác</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {tasks.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={6} className="h-24 text-center">
+                                Không tìm thấy công việc nào
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        tasks.map((task) => (
+                            <TableRow
+                                key={task.taskEachId}
+                                className={task.status === TaskStatus.Completed ? "bg-muted/20" : ""}
+                            >
+                                <TableCell>
+                                    <div>
+                                        <div className="font-medium">{task.title}</div>
+                                        <div className="text-sm text-muted-foreground line-clamp-2">{task.description}</div>
                                     </div>
-
-                                    <div className="py-3">
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            {task.description}
-                                        </p>
-
-                                        <div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground">
-                                            <div className="flex items-center">
-                                                <Calendar className="h-3.5 w-3.5 mr-2 text-emerald-500" />
-                                                <span>Bắt đầu: {task.startDate}</span>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <Calendar className="h-3.5 w-3.5 mr-2 text-amber-500" />
-                                                <span className={isTaskOverdue(task.endDate, task.status) ? "text-red-500 font-medium" : ""}>
-                                                    Hạn: {task.endDate}
-                                                    {isTaskOverdue(task.endDate, task.status) && " (Quá hạn)"}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-3 border-t">
-                                        {task.status !== TaskStatus.Completed && (
+                                </TableCell>
+                                <TableCell>{getStatusBadge(task.status)}</TableCell>
+                                <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                                <TableCell>{task.startDate}</TableCell>
+                                <TableCell>
+                                    <span className={task.isOverdue ? "text-red-500 font-medium" : ""}>
+                                        {task.endDate}
+                                        {task.isOverdue && (
+                                            <div className="text-xs text-red-500 font-normal">(Quá hạn)</div>
+                                        )}
+                                    </span>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex gap-2">
+                                        {task.status === TaskStatus.Pending && (
                                             <Button
-                                                className="w-full"
-                                                onClick={() => completeTask(task.taskEachId)}
-                                                disabled={completingTask === task.taskEachId}
+                                                size="sm"
+                                                onClick={() => startTask(task.taskEachId)}
+                                                disabled={processingTask === task.taskEachId}
+                                                className="h-8"
                                             >
-                                                {completingTask === task.taskEachId ? (
-                                                    <>
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                        Đang xử lý
-                                                    </>
+                                                {processingTask === task.taskEachId ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
                                                 ) : (
                                                     <>
-                                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                                        <PlayCircle className="mr-1 h-4 w-4" />
+                                                        Bắt đầu
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )}
+                                        {task.status !== TaskStatus.Completed && (
+                                            <Button
+                                                size="sm"
+                                                variant={task.status === TaskStatus.Pending ? "outline" : "default"}
+                                                onClick={() => completeTask(task.taskEachId)}
+                                                disabled={processingTask === task.taskEachId}
+                                                className="h-8"
+                                            >
+                                                {processingTask === task.taskEachId ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <>
+                                                        <CheckCircle className="mr-1 h-4 w-4" />
                                                         Hoàn thành
                                                     </>
                                                 )}
                                             </Button>
                                         )}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                </TableCell>
+                            </TableRow>
+                        ))
                     )}
-                </div>
-            </div>
+                </TableBody>
+            </Table>
         </div>
     );
 }

@@ -8,6 +8,7 @@ export interface Task {
     priority: "Low" | "Medium" | "High";
     startDate: string;
     endDate: string;
+    isOverdue: boolean;
 };
 
 export enum TaskStatus {
